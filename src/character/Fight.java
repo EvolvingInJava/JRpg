@@ -12,7 +12,7 @@ import java.util.Scanner;
  *
  * Classe dedita a ricreare il combattimento e la logica al suo interno
  * @Author EvolvingInJava
- * @Version 0.1b
+ * @Version 0.1.5b
  */
 public class Fight {
 

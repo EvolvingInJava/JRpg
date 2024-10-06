@@ -89,6 +89,11 @@ public class DatabaseManager {
         try (Connection con = connettiDb();
              PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, p.getUsername());
+
+            /*Se mi sono già autenticato e quindi non passo più la password in chiaro
+            ripasso la password hashata senza criptarla nuovamente o si cancellerebbe la password
+            nel db
+             */
             if(!isAuthenticated) {
                 pstmt.setString(2, hashedPassword); // Usa la password hashata
             }else{
