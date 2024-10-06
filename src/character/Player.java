@@ -1,14 +1,21 @@
 package character;
 
 
-// Sottoclasse per i Giocatori
+/**
+ * Autore: EvolvingInJava
+ * Data: 2024/10/06
+ *
+ * Classe che astrae il concetto di giocatore(il personaggio giocante del gioco)
+ * @Author EvolvingInJava
+ * @Version 0.1b
+ */
 public class Player extends Character implements Displayable {
     private String username;
     private String password;
     private int exp;
     private int id_player;
 
-    private final int EXP_NEEDED_LVLUP = 100;
+    private final int EXP_NEEDED_LVLUP = 100;//Costante che definisce a quanta exp scatta il LvLUP
 
     public Player(int id_player,String username, String password,int health,int max_health,
                   int attack,int armor,int level,int exp) {
@@ -97,6 +104,4 @@ public void displayStats(){
         this.id_player = id_player;
     }
 
-
-    // Altri metodi specifici per il giocatore
 }

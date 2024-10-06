@@ -1,9 +1,20 @@
+/**
+ * AUTORE: EvolvingInJava
+ * DATA 2024/10/06
+ *
+ * Classe astratta utilizzata per risparmiare codice con le classi figlie
+ * e poterne utilizzare il polimorfismo(Senza non si poteva fare).
+ * Attualmente è la classe madre dei mostri e del giocatore in futuro porbabilmente di qualche NPC bho..
+ *
+ *
+ */
+
 package character;
 
-import java.io.Serializable;
 
-// Superclasse per Personaggi
-public class Character  {
+
+
+public abstract class Character  {
     protected int maxHealth;
     protected int health;
     protected int attack;

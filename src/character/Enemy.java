@@ -30,9 +30,19 @@ public class Enemy extends Character implements Displayable{
         this.id_enemy = id_enemy;
     }
 
+    /**
+     * Setter che imposta e controlla quanti exp verranno dati alla sconfitta
+     * controllando al contempo che ne vengano dati in valore >= 0
+     * Altrimenti correggerà a 0, e stamperà un piccolo errore.
+     * Non ho lanciato un eccezione in quanto, anche se sicuramente migliore come opzione,
+     * Il problema può derivare solo da DB quindi andrà controllato il db con una query(Probabilmente
+     * lo aggiungerò in futuro in-app) SELECT * FROM enemies WHERE exp_win = 0
+     * Successivamente correggere a mano la row "difettosa" ricevuta dalla query
+     * @param expWin quanti exp darà di ricompensa se sconfitto
+     */
     private void setExpWin(int expWin) {
         if(expWin < 0) {
-            System.out.println("Error:Exp_wins less than 0");
+            System.out.println("Error:Exp_wins less than 0, check DB!");
             this.expWin = 0;
         }
         this.expWin = expWin;
@@ -52,5 +62,4 @@ public class Enemy extends Character implements Displayable{
                 getHealth()+"/"+getMaxHealth() + "HP");
     }
 
-    // Altri metodi specifici per l'character.NPC
 }

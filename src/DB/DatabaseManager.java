@@ -1,3 +1,14 @@
+/**
+ * AUTORE: EvolvingInJava
+ * DATA: 2024/10/06
+ *
+ * Classe che gestisce tutte le connessioni e le query con il DB
+ * Al momento è sufficiente solamente questa classe, se il progetto si espanderà ulteriormente,
+ * verrà suddivisa in altre classi per essere più manutendibile e di facile lettura.
+ *
+ * @Autor EvolvingInJava
+ * @Version 0.1b
+ */
 package DB;
 
 import character.Enemy;
@@ -25,24 +36,42 @@ public class DatabaseManager {
         return DriverManager.getConnection(url + db, user, password);
     }
 
-    // Classe per gestire l'hashing delle password
+    /**
+     * Classe interna utilizzata per cifrarece controllare le password a db
+     * Viene utilizzata la libreria Bcrypt v0.4
+     */
     private static class PasswordManager {
 
-        // Hashare una password
+        /**
+         * metodo per hashare la password da mandare a DB
+         * salt da modificare in base a quanto "pesante sarà l'app appena finita
+         * @param password la password leggibile che si vuole hashare
+         * @return password hashata pronta per essere mandata a db
+         */
         public String hashPassword(String password) {
             String salt = BCrypt.gensalt(10); // Genera un salt
             return BCrypt.hashpw(password, salt); // Hasha la password
         }
 
-        // Verificare una password
+        /**
+         * Confronta la password hashata con quella leggibile per vedere se sono uguali
+         * @param password password leggibile da controllare
+         * @param hashed password precedentemente hashata da confrontare
+         * @return true se sono uguali, false se non sono uguali
+         */
         public boolean checkPassword(String password, String hashed) {
             return BCrypt.checkpw(password, hashed); // Verifica la password
         }
     }
-
-    // Creiamo un'istanza della classe PasswordManager
+    
     private final PasswordManager passwordManager = new PasswordManager();
 
+    /**
+     * Metodo che salva il nostro personaggio su database ed in caso id o username
+     * siano giò presenti aggiorna i campi con i nuovi valori
+     *
+     * @param p giocatore che vogliamo salvare
+     */
     public void savePlayer(@NotNull Player p) {
         String hashedPassword = passwordManager.hashPassword(p.getPassword()); // Hasha la password
         String query = "INSERT INTO players(username,password,health,max_health,attack,armor,level,experience) " +
@@ -74,6 +103,12 @@ public class DatabaseManager {
         }
     }
 
+    /**
+     * Carica da DB un mostro di livello uguale o inferiore a quello del giocatore restituendo
+     * un oggetto pronto da utilizzare.
+     * @param p giocatore per confrontare il livello e scegliere i mostri adatti ad esso.
+     * @return un oggetto mostro, null solo se la tabella è vuota
+     */
     public Enemy loadEnemy(@NotNull Player p) {
         String query = "SELECT * FROM enemies WHERE level <= ? " +
                 "ORDER BY RAND() LIMIT 1";
@@ -104,6 +139,14 @@ public class DatabaseManager {
         return null;
     }
 
+    /**
+     * Metodo per caricare un personaggio dal db restituendoci l'oggetto già pronto.
+     * Può restituire un oggetto null se falliamo il login o se l'utente non è trovato
+     * TODO: gestire la cosa in modo migliore quando creerò l'interfaccia
+     * @param username username per accedere
+     * @param password password
+     * @return il giocatore che si logga, oppure null se non trovato o login errato
+     */
     public Player loadPlayer(String username, String password) {
         String query = "SELECT * FROM players WHERE username = ?";
         try (Connection con = connettiDb();
