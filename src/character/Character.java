@@ -3,7 +3,7 @@ package character;
 import java.io.Serializable;
 
 // Superclasse per Personaggi
-public abstract class Character  {
+public class Character  {
     protected int maxHealth;
     protected int health;
     protected int attack;

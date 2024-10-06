@@ -1,6 +1,5 @@
 package character;
 
-import java.io.Serializable;
 
 // Sottoclasse per i Giocatori
 public class Player extends Character implements Displayable {
