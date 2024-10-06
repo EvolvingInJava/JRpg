@@ -7,7 +7,7 @@
  * verrà suddivisa in altre classi per essere più manutendibile e di facile lettura.
  *
  * @Autor EvolvingInJava
- * @Version 0.1b
+ * @Version 0.2b
  */
 package DB;
 
@@ -20,11 +20,12 @@ import java.sql.*;
 
 public class DatabaseManager {
 
-    private final String user = "root";
-    private final String password = "password";
-    private final String url = "jdbc:mysql://localhost:3306/";
-    private final String db = "rpg_game";
+    private final String USER = "root";
+    private final String PASSWORD = "password";
+    private final String URL = "jdbc:mysql://localhost:3306/";
+    private final String DB = "rpg_game";
 
+    private static boolean isAuthenticated = false;
     /**
      * Metodo principale per connettersi al DB con i parametri preimpostati nelle costanti che
      * garantiscono un percorso certo al DB da utilizzare
@@ -33,7 +34,7 @@ public class DatabaseManager {
      * @throws SQLException potrebbe lanciare un eccezione in caso non ci si riesca a connettere a MySQL
      */
     public Connection connettiDb() throws SQLException {
-        return DriverManager.getConnection(url + db, user, password);
+        return DriverManager.getConnection(URL + DB, USER, PASSWORD);
     }
 
     /**
@@ -43,7 +44,7 @@ public class DatabaseManager {
     private static class PasswordManager {
 
         /**
-         * metodo per hashare la password da mandare a DB
+         * Metodo per hashare la password da mandare a DB
          * salt da modificare in base a quanto "pesante sarà l'app appena finita
          * @param password la password leggibile che si vuole hashare
          * @return password hashata pronta per essere mandata a db
@@ -88,7 +89,11 @@ public class DatabaseManager {
         try (Connection con = connettiDb();
              PreparedStatement pstmt = con.prepareStatement(query)) {
             pstmt.setString(1, p.getUsername());
-            pstmt.setString(2, hashedPassword); // Usa la password hashata
+            if(!isAuthenticated) {
+                pstmt.setString(2, hashedPassword); // Usa la password hashata
+            }else{
+                pstmt.setString(2, p.getPassword());
+            }
             pstmt.setInt(3, p.getHealth());
             pstmt.setInt(4, p.getMaxHealth());
             pstmt.setInt(5, p.getAttack());
@@ -157,8 +162,9 @@ public class DatabaseManager {
 
             if (rs.next()) {
                 String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal DB
-                if (passwordManager.checkPassword(password, hashedPassword)) { // Verifica la password
-                    return new Player(rs.getInt("id_player"),
+                if (passwordManager.checkPassword(password, hashedPassword) || isAuthenticated) {// Verifica la password
+                    isAuthenticated = true;
+                    return new Player(this,rs.getInt("id_player"),
                             rs.getString("username"),
                             hashedPassword, // Puoi anche decidere di non restituire l'hash
                             rs.getInt("health"),
