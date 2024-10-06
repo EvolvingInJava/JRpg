@@ -72,7 +72,7 @@ public class Fight {
             isEnemyDefend = true;
         }
 
-        System.out.print(" si prepara a difendersi!");
+        System.out.print(" si prepara a difendersi!\n");
     }
 
     /**
@@ -89,7 +89,7 @@ public class Fight {
             isEnemyCharge = true;
         }
 
-        System.out.print(" sta caricando l'attacco!");
+        System.out.print(" sta caricando l'attacco!\n");
     }
 
     /**
@@ -104,26 +104,45 @@ public class Fight {
         //valori di base di attacco e difesa recuperati dai combattenti
         int difesa = difensore.getArmor();
         int attacco = attaccante.getAttack();
+        String nomDifensore;
+
+        if(difensore instanceof Player){
+            nomDifensore = ((Player) difensore).getUsername();
+        }else{
+            nomDifensore = ((Enemy) difensore).getEnemyName();
+        }
 
         //Calcolo la difesa in base a se il difensore precedentemente ha scelto di difendersi
-        if (difensore.getClass().isInstance(getPlayer()) && isPlayerDefend) {
+        if (difensore instanceof Player && isPlayerDefend) {
             difesa *=  DEFEND_ARMOR_MODIFIER; //Cast implicito (int)
             isPlayerDefend = false;
-        } else if (difensore.getClass().isInstance(getEnemy()) && isEnemyDefend) {
+        } else if (difensore instanceof Enemy && isEnemyDefend) {
             difesa *= DEFEND_ARMOR_MODIFIER;//Cast implicito (int)
             isEnemyDefend = false;
         }
 
         //calcolo attacco
-        if (attaccante.getClass().isInstance(getPlayer()) && isPlayerCharge) {
+        if (attaccante instanceof Player && isPlayerCharge) {
             attacco *= CHARGED_ATK_MODIFIER;
             isPlayerCharge = false;
-        } else if (difensore.getClass().isInstance(getEnemy()) && isEnemyCharge) {
+        } else if (attaccante instanceof Enemy && isEnemyCharge) {
             attacco *= CHARGED_ATK_MODIFIER;
             isEnemyCharge = false;
         }
 
-        difensore.setHealth( (difensore.getHealth()-(attacco-difesa)) );
+        int danno = 0;
+
+        if((attacco-difesa)< 1){
+            danno = 1;
+
+        }else{
+            danno = attacco-difesa;
+        }
+
+        difensore.setHealth(difensore.getHealth()-danno );
+        System.out.println(nomDifensore + " è stato attaccato: " +
+                difensore.health +"/" + difensore.maxHealth + "Hp");
+
     }
 
 
@@ -167,7 +186,7 @@ public class Fight {
                     System.out.println("1 - Attacca");
                     System.out.println("2 - Difendi");
                     System.out.println("3 - Carica attacco");
-
+System.out.print("La tua scelta: ");
                     sceltaGiocatore = scanner.nextInt();
                     if (sceltaGiocatore < 1 || sceltaGiocatore > 3) {
                         System.out.println("Scelta non valida, inserisci un numero tra 1 e 3.");
@@ -218,9 +237,10 @@ public class Fight {
 
     private void haiVinto(Player player,Enemy enemy) {
         System.out.println("Hai vinto!\n" +
-                "Hai guadagnato " + enemy.getExpWin() + "Exp.");
+                "Hai guadagnato " + enemy.getExpWin() + "Exp." );
         player.raiseEXP(enemy.getExpWin());
-        getPlayer().save();
+        System.out.println("Mancano: " + player.getEXP_NEEDED_LVLUP()- player.getExp() + "Exp.");
+        player.save();
     }
 
     private void haiPerso(){

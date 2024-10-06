@@ -38,7 +38,7 @@ public abstract class Character  {
      * @param health la nuova salute da impostare
      */
     public void setHealth(int health) {
-        this.health = Math.max(0, Math.min(health, maxHealth)); // Assicurati che la salute rimanga entro i limiti
+        this.health = Math.max(0, Math.min(health, maxHealth));
     }
 
     public int getAttack() {

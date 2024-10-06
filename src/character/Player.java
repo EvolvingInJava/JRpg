@@ -3,7 +3,6 @@ package character;
 
 import DB.DatabaseManager;
 
-import javax.xml.crypto.Data;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -77,7 +76,7 @@ public class Player extends Character implements Displayable {
     }
 
     public void raiseEXP(int exp) {
-        setExp(exp + getExp() / getLevel());
+        setExp(exp + (getExp() / getLevel()));
     }
 
     public void setExp(int exp) {
@@ -94,11 +93,11 @@ public class Player extends Character implements Displayable {
      * Metodo per il level UP. Aumenta il livello e le statistiche quando si raggiunge l'esperienza necessaria.
      */
     private void levelUp() {
-        while (this.exp >= EXP_NEEDED_LVLUP) {
-            this.exp -= EXP_NEEDED_LVLUP;
+        while (this.exp >= getEXP_NEEDED_LVLUP()) {
+            this.exp -= getEXP_NEEDED_LVLUP();
             setLevel(getLevel() + 1);
             setMaxHealth(getMaxHealth() + 3);
-            setHealth(getHealth() + 3);
+            setHealth(getMaxHealth());
             System.out.println("Complimenti il tuo livello è aumentato!");
             raiseStat();
             save();//Salvo le modifiche
@@ -110,7 +109,7 @@ public class Player extends Character implements Displayable {
                 getHealth() + "/" + getMaxHealth() + "HP\n" +
                 "Atk: " + getAttack() + "\n" +
                 "Armor: " + getArmor() + "\n" +
-                "Exp. " + getExp() + ", al prossimo livello " + (EXP_NEEDED_LVLUP - getExp()) + "Exp."
+                "Exp. " + getExp() + ", al prossimo livello " + (getEXP_NEEDED_LVLUP() - getExp()) + "Exp."
 
         );
     }
@@ -173,4 +172,7 @@ public class Player extends Character implements Displayable {
 
     }
 
+    public int getEXP_NEEDED_LVLUP() {
+        return EXP_NEEDED_LVLUP;
+    }
 }
