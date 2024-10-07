@@ -1,4 +1,4 @@
-package character;
+package org.EvolvingInJava.character;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -35,14 +35,14 @@ public class Enemy extends Character implements Displayable{
      * controllando al contempo che ne vengano dati in valore >= 0
      * Altrimenti correggerà a 0, e stamperà un piccolo errore.
      * Non ho lanciato un eccezione in quanto, anche se sicuramente migliore come opzione,
-     * Il problema può derivare solo da DB quindi andrà controllato il db con una query(Probabilmente
+     * Il problema può derivare solo da org.EvolvingInJava.DB quindi andrà controllato il db con una query(Probabilmente
      * lo aggiungerò in futuro in-app) SELECT * FROM enemies WHERE exp_win = 0
      * Successivamente correggere a mano la row "difettosa" ricevuta dalla query
      * @param expWin quanti exp darà di ricompensa se sconfitto
      */
     private void setExpWin(int expWin) {
         if(expWin < 0) {
-            System.out.println("Error:Exp_wins less than 0, check DB!");
+            System.out.println("Error:Exp_wins less than 0, check org.EvolvingInJava.DB!");
             this.expWin = 0;
         }
         this.expWin = expWin;

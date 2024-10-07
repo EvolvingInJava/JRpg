@@ -9,7 +9,7 @@
  *
  */
 
-package character;
+package org.EvolvingInJava.character;
 
 
 

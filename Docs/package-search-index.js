@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"character"},{"l":"DB"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"org.EvolvingInJava.character"},{"l":"org.EvolvingInJava.DB"}];updateSearchResults();

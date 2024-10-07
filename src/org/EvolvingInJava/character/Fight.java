@@ -1,6 +1,7 @@
-package character;
+package org.EvolvingInJava.character;
 
-import DB.DatabaseManager;
+import org.EvolvingInJava.DB.DatabaseManager;
+import org.EvolvingInJava.character.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.InputMismatchException;
@@ -28,7 +29,7 @@ public class Fight {
     private final double DEFEND_ARMOR_MODIFIER = 2.0; //Costante usata come modificatore dell'armatura in caso si difenda
 
     /**
-     * Inizializzo i combattenti della battaglia, utilizzando il parametro player per ricaricare da DB
+     * Inizializzo i combattenti della battaglia, utilizzando il parametro player per ricaricare da org.EvolvingInJava.DB
      * i valori più aggiornati per mitigare modifiche inaspettate
      * @param player player che verrà utilizzato per combattere
      * @param enemy Nemico che verrà utilizzato per combattere
@@ -239,7 +240,7 @@ System.out.print("La tua scelta: ");
         System.out.println("Hai vinto!\n" +
                 "Hai guadagnato " + enemy.getExpWin() + "Exp." );
         player.raiseEXP(enemy.getExpWin());
-        System.out.println("Mancano: " + player.getEXP_NEEDED_LVLUP()- player.getExp() + "Exp.");
+        System.out.println("Mancano: " + (player.getEXP_NEEDED_LVLUP() - player.getExp()) + "Exp.");
         player.save();
     }
 

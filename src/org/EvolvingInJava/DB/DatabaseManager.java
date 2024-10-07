@@ -1,18 +1,18 @@
 /**
  * AUTORE: EvolvingInJava
- * DATA: 2024/10/06
+ * DATA: 2024/10/07
  *
- * Classe che gestisce tutte le connessioni e le query con il DB
+ * Classe che gestisce tutte le connessioni e le query con il org.EvolvingInJava.DB
  * Al momento è sufficiente solamente questa classe, se il progetto si espanderà ulteriormente,
  * verrà suddivisa in altre classi per essere più manutendibile e di facile lettura.
  *
  * @Autor EvolvingInJava
- * @Version 0.2b
+ * @Version 0.3b
  */
-package DB;
+package org.EvolvingInJava.DB;
 
-import character.Enemy;
-import character.Player;
+import org.EvolvingInJava.character.Enemy;
+import org.EvolvingInJava.character.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt; // Importa Bcrypt
 
@@ -27,8 +27,8 @@ public class DatabaseManager {
 
     private static boolean isAuthenticated = false;
     /**
-     * Metodo principale per connettersi al DB con i parametri preimpostati nelle costanti che
-     * garantiscono un percorso certo al DB da utilizzare
+     * Metodo principale per connettersi al org.EvolvingInJava.DB con i parametri preimpostati nelle costanti che
+     * garantiscono un percorso certo al org.EvolvingInJava.DB da utilizzare
      *
      * @return ritorna un oggetto Connection
      * @throws SQLException potrebbe lanciare un eccezione in caso non ci si riesca a connettere a MySQL
@@ -44,7 +44,7 @@ public class DatabaseManager {
     private static class PasswordManager {
 
         /**
-         * Metodo per hashare la password da mandare a DB
+         * Metodo per hashare la password da mandare a org.EvolvingInJava.DB
          * salt da modificare in base a quanto "pesante sarà l'app appena finita
          * @param password la password leggibile che si vuole hashare
          * @return password hashata pronta per essere mandata a db
@@ -69,7 +69,7 @@ public class DatabaseManager {
 
     /**
      * Metodo che salva il nostro personaggio su database ed in caso id o username
-     * siano giò presenti aggiorna i campi con i nuovi valori
+     * siano già presenti aggiorna i campi con i nuovi valori passati dal parametro @param p .
      *
      * @param p giocatore che vogliamo salvare
      */
@@ -106,6 +106,7 @@ public class DatabaseManager {
             pstmt.setInt(7, p.getLevel());
             pstmt.setInt(8, p.getExp());
             pstmt.executeUpdate();
+            isAuthenticated = true;
             System.out.println("Player " + p.getUsername() + " è stato salvato");
         } catch (SQLException e) {
             System.out.println("Errore durante il salvataggio");
@@ -113,8 +114,12 @@ public class DatabaseManager {
         }
     }
 
+    public void createNewPlayer(@NotNull Player p) {
+        String hashedPassword = passwordManager.hashPassword(p.getPassword());
+
+    }
     /**
-     * Carica da DB un mostro di livello uguale o inferiore a quello del giocatore restituendo
+     * Carica da org.EvolvingInJava.DB un mostro di livello uguale o inferiore a quello del giocatore restituendo
      * un oggetto pronto da utilizzare.
      * @param p giocatore per confrontare il livello e scegliere i mostri adatti ad esso.
      * @return un oggetto mostro, null solo se la tabella è vuota
@@ -157,6 +162,7 @@ public class DatabaseManager {
      * @param password password
      * @return il giocatore che si logga, oppure null se non trovato o login errato
      */
+
     public Player loadPlayer(String username, String password) {
         String query = "SELECT * FROM players WHERE username = ?";
         try (Connection con = connettiDb();
@@ -166,7 +172,7 @@ public class DatabaseManager {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal DB
+                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal org.EvolvingInJava.DB
                 if (passwordManager.checkPassword(password, hashedPassword) || isAuthenticated) {// Verifica la password
                     isAuthenticated = true;
                     return new Player(this,rs.getInt("id_player"),
@@ -192,4 +198,39 @@ public class DatabaseManager {
         }
         return null;
     }
+
+    /**
+     * Cerca un username nel DB
+     * @param username username da cercare nel DB
+     * @return true se esiste, false se non esiste
+     */
+    public boolean isUsernameExist(@NotNull String username) {
+        String query = "SELECT * FROM players WHERE username = ? LIMIT 1";
+
+        try(Connection con = connettiDb();
+        PreparedStatement pstmt = con.prepareStatement(query)){
+            pstmt.setString(1, username);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                rs.close();
+                return true;
+            }
+            rs.close();
+        }catch(SQLException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * setter statico in modo da essere resettato da NewPlayerCreation e consentire la creazione di più utenti
+     * consecutivamente senza crash
+     * @param isAuthenticated variabile da impastare al membro interno alla classe
+     */
+    public static void setIsAuthenticated(boolean isAuthenticated) {
+        DatabaseManager.isAuthenticated = isAuthenticated;
+    }
+
+
 }

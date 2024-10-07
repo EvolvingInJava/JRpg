@@ -1,19 +1,21 @@
-package character;
+package org.EvolvingInJava.character.player;
 
 
-import DB.DatabaseManager;
+import org.EvolvingInJava.DB.DatabaseManager;
+import org.EvolvingInJava.character.Character;
+import org.EvolvingInJava.character.Displayable;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 /**
  * Autore: EvolvingInJava
- * Data: 2024/10/06
+ * Data: 2024/10/07
  * <p>
  * Classe che astrae il concetto di giocatore(il personaggio giocante del gioco)
  * {@code @Author} EvolvingInJava
  *
- * @Version 0.1.1
+ * @Version 0.2b
  */
 public class Player extends Character implements Displayable {
     private String username;
@@ -26,15 +28,29 @@ public class Player extends Character implements Displayable {
 
     private final int EXP_NEEDED_LVLUP = 100;//Costante che definisce a quanta exp scatta il LvLUP
 
-    public Player(DatabaseManager databaseManager, int id_player, String username, String password, int health, int max_health,
+
+    public Player(DatabaseManager databaseManager, String username, String password, int health, int max_health,
                   int attack, int armor, int level, int exp) {
 
         super(max_health, health, attack, armor, level); // Inizializza con valori di default
         setUsername(username);
         setPassword(password);
-        setId_player(id_player);
         setExp(exp);
         this.databaseManager = databaseManager;
+        databaseManager.savePlayer(this);
+        setId_player(databaseManager.loadPlayer(getUsername(),getPassword()).getId_player());
+    }
+
+    public Player(DatabaseManager databaseManager,int id_player, String username, String password, int health, int max_health,
+                  int attack, int armor, int level, int exp) {
+
+        super(max_health, health, attack, armor, level);// Inizializza con valori di default
+        setId_player(id_player);
+        setUsername(username);
+        setPassword(password);
+        setExp(exp);
+        this.databaseManager = databaseManager;
+        setId_player(id_player);
     }
 
     // Getter per l'username
