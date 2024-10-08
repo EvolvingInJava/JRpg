@@ -25,7 +25,7 @@ public class DatabaseManager {
     private final String URL = "jdbc:mysql://localhost:3306/";
     private final String DB = "rpg_game";
 
-    private static boolean isAuthenticated = false;
+    private volatile static boolean isAuthenticated = false;
     /**
      * Metodo principale per connettersi al org.EvolvingInJava.DB con i parametri preimpostati nelle costanti che
      * garantiscono un percorso certo al org.EvolvingInJava.DB da utilizzare
@@ -162,8 +162,51 @@ public class DatabaseManager {
      * @param password password
      * @return il giocatore che si logga, oppure null se non trovato o login errato
      */
-
     public Player loadPlayer(String username, String password) {
+        String query = "SELECT * FROM players WHERE username = ?";
+        try (Connection con = connettiDb();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal database
+
+                // Verifica la password solo se l'utente non è già autenticato
+                if (!isAuthenticated) {
+                    if (passwordManager.checkPassword(password, hashedPassword)) {
+                        isAuthenticated = true; // Autenticazione avvenuta con successo
+                    } else {
+                        System.out.println("Password errata per l'utente: " + username);
+                        return null; // Se la password è errata, restituisci null
+                    }
+                }
+
+                // Se l'utente è autenticato (anche dopo aver verificato la password), carica i dati del giocatore
+                return new Player(this,
+                        rs.getInt("id_player"),
+                        rs.getString("username"),
+                        hashedPassword, // Puoi anche decidere di non restituire l'hash
+                        rs.getInt("health"),
+                        rs.getInt("max_health"),
+                        rs.getInt("attack"),
+                        rs.getInt("armor"),
+                        rs.getInt("level"),
+                        rs.getInt("experience"));
+            } else {
+                System.out.println("Utente non trovato, controlla username");
+            }
+            rs.close();
+        } catch (SQLException e) {
+            System.out.println("Errore nel caricare il giocatore");
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+   /* public Player loadPlayer(String username, String password) {
         String query = "SELECT * FROM players WHERE username = ?";
         try (Connection con = connettiDb();
              PreparedStatement pstmt = con.prepareStatement(query)) {
@@ -197,7 +240,7 @@ public class DatabaseManager {
             return null;
         }
         return null;
-    }
+    }*/
 
     /**
      * Cerca un username nel DB
@@ -230,6 +273,10 @@ public class DatabaseManager {
      */
     public static void setIsAuthenticated(boolean isAuthenticated) {
         DatabaseManager.isAuthenticated = isAuthenticated;
+    }
+
+    public static boolean getIsAuthenticated(){
+        return DatabaseManager.isAuthenticated;
     }
 
 

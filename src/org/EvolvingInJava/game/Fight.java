@@ -1,6 +1,8 @@
-package org.EvolvingInJava.character;
+package org.EvolvingInJava.game;
 
 import org.EvolvingInJava.DB.DatabaseManager;
+import org.EvolvingInJava.character.Character;
+import org.EvolvingInJava.character.Enemy;
 import org.EvolvingInJava.character.player.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +66,7 @@ public class Fight {
      * che memorizzerà questa scelta e verrà utilizzata nel metodo Attacca
      * @param character utilizzato come polimorfismo per le classi
      */
-    private void defend(Character character) {
+    private void defend(org.EvolvingInJava.character.Character character) {
         if (character.getClass().isInstance(getPlayer())) {
             System.out.print(getPlayer().getUsername());
             isPlayerDefend = true;
@@ -81,7 +83,7 @@ public class Fight {
      * che memorizzerà questa scelta e verrà utilizzata nel metodo Attacca
      * @param character utilizzato come polimorfismo per le classi
      */
-    private void caricaAttacco(Character character) {
+    private void caricaAttacco(org.EvolvingInJava.character.Character character) {
         if (character.getClass().isInstance(getPlayer())) {
             System.out.print(getPlayer().getUsername());
             isPlayerCharge = true;
@@ -100,7 +102,7 @@ public class Fight {
      * @param attaccante chi attaccherà
      * @param difensore chi riceve il danno
      */
-    private void attacca(@NotNull Character attaccante, @NotNull Character difensore) {
+    private void attacca(@NotNull org.EvolvingInJava.character.Character attaccante, @NotNull org.EvolvingInJava.character.Character difensore) {
 
         //valori di base di attacco e difesa recuperati dai combattenti
         int difesa = difensore.getArmor();
@@ -142,7 +144,7 @@ public class Fight {
 
         difensore.setHealth(difensore.getHealth()-danno );
         System.out.println(nomDifensore + " è stato attaccato: " +
-                difensore.health +"/" + difensore.maxHealth + "Hp");
+                difensore.getHealth() +"/" + difensore.getMaxHealth() + "Hp");
 
     }
 
@@ -208,7 +210,6 @@ System.out.print("La tua scelta: ");
 
             // Controlliamo se il nemico è morto
             if (checkDead(getEnemy())) {
-                System.out.println(getEnemy().getEnemyName() + " è stato sconfitto!");
                 haiVinto(getPlayer(),getEnemy());
                 getPlayer().save();
                 break;
@@ -232,15 +233,19 @@ System.out.print("La tua scelta: ");
         }
 
         System.out.println("Fine del combattimento.");
-        scanner.close();
         return getPlayer();
     }
 
     private void haiVinto(Player player,Enemy enemy) {
         System.out.println("Hai vinto!\n" +
-                "Hai guadagnato " + enemy.getExpWin() + "Exp." );
+                "Hai guadagnato " + (enemy.getExpWin()/ player.getLevel()) + "Exp." );
         player.raiseEXP(enemy.getExpWin());
         System.out.println("Mancano: " + (player.getEXP_NEEDED_LVLUP() - player.getExp()) + "Exp.");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         player.save();
     }
 

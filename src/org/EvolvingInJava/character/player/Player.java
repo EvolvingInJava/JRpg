@@ -180,7 +180,7 @@ public class Player extends Character implements Displayable {
                 System.out.println("Errore: Inserisci un numero valido.");
 
         }
-        scan.close();
+
     }
 
     public void save() {

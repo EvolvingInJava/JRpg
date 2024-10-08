@@ -1,3 +1,6 @@
-unnamed package
+org.EvolvingInJava
 org.EvolvingInJava.character
+org.EvolvingInJava.character.player
 org.EvolvingInJava.DB
+org.EvolvingInJava.game
+org.EvolvingInJava.UI

@@ -47,11 +47,6 @@ private Player setAttributePoint(){
 
     for(int i = 0; i < INITIAL_ATTRIBUTE_POINTS; i++) {
         printActualStats();
-        try{
-          Thread.sleep(2000);
-        }catch(InterruptedException e){
-            e.printStackTrace();
-        }
         creationMenu(i);
     }
 
