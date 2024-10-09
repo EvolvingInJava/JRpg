@@ -2,7 +2,7 @@
  * AUTORE: EvolvingInJava
  * DATA: 2024/10/07
  *
- * Classe che gestisce tutte le connessioni e le query con il org.EvolvingInJava.DB
+ * Classe che gestisce tutte le connessioni e le query con il database.
  * Al momento è sufficiente solamente questa classe, se il progetto si espanderà ulteriormente,
  * verrà suddivisa in altre classi per essere più manutendibile e di facile lettura.
  *
@@ -14,40 +14,43 @@ package org.EvolvingInJava.DB;
 import org.EvolvingInJava.character.Enemy;
 import org.EvolvingInJava.character.player.Player;
 import org.jetbrains.annotations.NotNull;
-import org.mindrot.jbcrypt.BCrypt; // Importa Bcrypt
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.*;
 
 public class DatabaseManager {
 
+    // Costanti di configurazione per la connessione al database
     private final String USER = "root";
     private final String PASSWORD = "password";
     private final String URL = "jdbc:mysql://localhost:3306/";
     private final String DB = "rpg_game";
 
+    // Flag per gestire lo stato di autenticazione
     private volatile static boolean isAuthenticated = false;
+
+    // Istanza di PasswordManager per gestire la cifratura delle password
+    private final PasswordManager passwordManager = new PasswordManager();
+
     /**
-     * Metodo principale per connettersi al org.EvolvingInJava.DB con i parametri preimpostati nelle costanti che
-     * garantiscono un percorso certo al org.EvolvingInJava.DB da utilizzare
-     *
-     * @return ritorna un oggetto Connection
-     * @throws SQLException potrebbe lanciare un eccezione in caso non ci si riesca a connettere a MySQL
+     * Metodo principale per connettersi al database con i parametri preimpostati.
+     * @return ritorna un oggetto Connection.
+     * @throws SQLException potrebbe lanciare un'eccezione in caso di problemi di connessione.
      */
     public Connection connettiDb() throws SQLException {
         return DriverManager.getConnection(URL + DB, USER, PASSWORD);
     }
 
     /**
-     * Classe interna utilizzata per cifrarece controllare le password a db
-     * Viene utilizzata la libreria Bcrypt v0.4
+     * Classe interna per la gestione delle password (hashing e verifica).
+     * Utilizza la libreria BCrypt per la sicurezza.
      */
     private static class PasswordManager {
 
         /**
-         * Metodo per hashare la password da mandare a org.EvolvingInJava.DB
-         * salt da modificare in base a quanto "pesante sarà l'app appena finita
-         * @param password la password leggibile che si vuole hashare
-         * @return password hashata pronta per essere mandata a db
+         * Metodo per hashare la password utilizzando BCrypt.
+         * @param password la password leggibile che si vuole hashare.
+         * @return password hashata pronta per essere salvata nel database.
          */
         public String hashPassword(String password) {
             String salt = BCrypt.gensalt(10); // Genera un salt
@@ -55,23 +58,21 @@ public class DatabaseManager {
         }
 
         /**
-         * Confronta la password hashata con quella leggibile per vedere se sono uguali
-         * @param password password leggibile da controllare
-         * @param hashed password precedentemente hashata da confrontare
-         * @return true se sono uguali, false se non sono uguali
+         * Verifica la corrispondenza tra una password leggibile e una password hashata.
+         * @param password la password leggibile.
+         * @param hashed la password hashata da confrontare.
+         * @return true se le password coincidono, false altrimenti.
          */
         public boolean checkPassword(String password, String hashed) {
             return BCrypt.checkpw(password, hashed); // Verifica la password
         }
     }
-    
-    private final PasswordManager passwordManager = new PasswordManager();
+
+    // ----- Metodi per la gestione dei giocatori -----
 
     /**
-     * Metodo che salva il nostro personaggio su database ed in caso id o username
-     * siano già presenti aggiorna i campi con i nuovi valori passati dal parametro @param p .
-     *
-     * @param p giocatore che vogliamo salvare
+     * Salva un giocatore nel database. Se l'ID o l'username esistono già, aggiorna i dati del giocatore.
+     * @param p il giocatore da salvare.
      */
     public void savePlayer(@NotNull Player p) {
         String hashedPassword = passwordManager.hashPassword(p.getPassword()); // Hasha la password
@@ -88,25 +89,27 @@ public class DatabaseManager {
 
         try (Connection con = connettiDb();
              PreparedStatement pstmt = con.prepareStatement(query)) {
+
             pstmt.setString(1, p.getUsername());
 
-            /*Se mi sono già autenticato e quindi non passo più la password in chiaro
-            ripasso la password hashata senza criptarla nuovamente o si cancellerebbe la password
-            nel db
-             */
-            if(!isAuthenticated) {
+            // Se non siamo già autenticati, hashiamo la password prima di salvarla
+            if (!isAuthenticated) {
                 pstmt.setString(2, hashedPassword); // Usa la password hashata
-            }else{
+            } else {
                 pstmt.setString(2, p.getPassword());
             }
+
+            // Imposta i parametri rimanenti
             pstmt.setInt(3, p.getHealth());
             pstmt.setInt(4, p.getMaxHealth());
             pstmt.setInt(5, p.getAttack());
             pstmt.setInt(6, p.getArmor());
             pstmt.setInt(7, p.getLevel());
             pstmt.setInt(8, p.getExp());
-            pstmt.executeUpdate();
-            isAuthenticated = true;
+
+            pstmt.executeUpdate(); // Esegui l'update
+
+            isAuthenticated = true; // Autenticazione completata
             System.out.println("Player " + p.getUsername() + " è stato salvato");
         } catch (SQLException e) {
             System.out.println("Errore durante il salvataggio");
@@ -114,27 +117,76 @@ public class DatabaseManager {
         }
     }
 
-    public void createNewPlayer(@NotNull Player p) {
-        String hashedPassword = passwordManager.hashPassword(p.getPassword());
-
-    }
     /**
-     * Carica da org.EvolvingInJava.DB un mostro di livello uguale o inferiore a quello del giocatore restituendo
-     * un oggetto pronto da utilizzare.
-     * @param p giocatore per confrontare il livello e scegliere i mostri adatti ad esso.
-     * @return un oggetto mostro, null solo se la tabella è vuota
+     * Metodo per caricare un giocatore dal database verificando username e password.
+     * @param username username del giocatore.
+     * @param password password del giocatore.
+     * @return un oggetto Player se l'autenticazione ha successo, null altrimenti.
      */
-    public Enemy loadEnemy(@NotNull Player p) {
-        String query = "SELECT * FROM enemies WHERE level <= ? " +
-                "ORDER BY RAND() LIMIT 1";
+    public Player loadPlayer(String username, String password) {
+        String query = "SELECT * FROM players WHERE username = ?";
+
         try (Connection con = connettiDb();
              PreparedStatement pstmt = con.prepareStatement(query)) {
-            pstmt.setInt(1, p.getLevel());
 
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return new Enemy(rs.getInt("id_enemy"),
+                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal DB
+
+                // Verifica la password solo se l'utente non è già autenticato
+                if (!isAuthenticated) {
+                    if (passwordManager.checkPassword(password, hashedPassword)) {
+                        isAuthenticated = true; // Autenticazione avvenuta con successo
+                    } else {
+                        System.out.println("Password errata per l'utente: " + username);
+                        return null;
+                    }
+                }
+
+                // Ritorna l'oggetto Player
+                return new Player(this,
+                        rs.getInt("id_player"),
+                        rs.getString("username"),
+                        hashedPassword,
+                        rs.getInt("health"),
+                        rs.getInt("max_health"),
+                        rs.getInt("attack"),
+                        rs.getInt("armor"),
+                        rs.getInt("level"),
+                        rs.getInt("experience"));
+            } else {
+                System.out.println("Utente non trovato: " + username);
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            System.out.println("Errore nel caricamento del giocatore");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // ----- Metodi per la gestione dei nemici -----
+
+    /**
+     * Carica un nemico dal database con livello uguale o inferiore a quello del giocatore.
+     * @param p giocatore per confrontare il livello e selezionare un nemico adeguato.
+     * @return un oggetto Enemy, oppure null se non viene trovato alcun nemico.
+     */
+    public Enemy loadEnemy(@NotNull Player p) {
+        String query = "SELECT * FROM enemies WHERE level <= ? ORDER BY RAND() LIMIT 1";
+
+        try (Connection con = connettiDb();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setInt(1, p.getLevel());
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return new Enemy(
+                        rs.getInt("id_enemy"),
                         rs.getString("enemy_name"),
                         rs.getInt("max_health"),
                         rs.getInt("health"),
@@ -143,141 +195,60 @@ public class DatabaseManager {
                         rs.getInt("level"),
                         rs.getInt("exp_win"));
             } else {
-                System.out.println("Nemico non trovato: " + p.getLevel());
+                System.out.println("Nemico non trovato: livello " + p.getLevel());
             }
+
             rs.close();
         } catch (SQLException e) {
-            System.out.println("Error enemy load from database");
+            System.out.println("Errore nel caricamento del nemico");
             e.printStackTrace();
         }
 
         return null;
     }
 
-    /**
-     * Metodo per caricare un personaggio dal db restituendoci l'oggetto già pronto.
-     * Può restituire un oggetto null se falliamo il login o se l'utente non è trovato
-     * TODO: gestire la cosa in modo migliore quando creerò l'interfaccia
-     * @param username username per accedere
-     * @param password password
-     * @return il giocatore che si logga, oppure null se non trovato o login errato
-     */
-    public Player loadPlayer(String username, String password) {
-        String query = "SELECT * FROM players WHERE username = ?";
-        try (Connection con = connettiDb();
-             PreparedStatement pstmt = con.prepareStatement(query)) {
-
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal database
-
-                // Verifica la password solo se l'utente non è già autenticato
-                if (!isAuthenticated) {
-                    if (passwordManager.checkPassword(password, hashedPassword)) {
-                        isAuthenticated = true; // Autenticazione avvenuta con successo
-                    } else {
-                        System.out.println("Password errata per l'utente: " + username);
-                        return null; // Se la password è errata, restituisci null
-                    }
-                }
-
-                // Se l'utente è autenticato (anche dopo aver verificato la password), carica i dati del giocatore
-                return new Player(this,
-                        rs.getInt("id_player"),
-                        rs.getString("username"),
-                        hashedPassword, // Puoi anche decidere di non restituire l'hash
-                        rs.getInt("health"),
-                        rs.getInt("max_health"),
-                        rs.getInt("attack"),
-                        rs.getInt("armor"),
-                        rs.getInt("level"),
-                        rs.getInt("experience"));
-            } else {
-                System.out.println("Utente non trovato, controlla username");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            System.out.println("Errore nel caricare il giocatore");
-            e.printStackTrace();
-            return null;
-        }
-        return null;
-    }
-
-   /* public Player loadPlayer(String username, String password) {
-        String query = "SELECT * FROM players WHERE username = ?";
-        try (Connection con = connettiDb();
-             PreparedStatement pstmt = con.prepareStatement(query)) {
-
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                String hashedPassword = rs.getString("password"); // Ottieni la password hashata dal org.EvolvingInJava.DB
-                if (passwordManager.checkPassword(password, hashedPassword) || isAuthenticated) {// Verifica la password
-                    isAuthenticated = true;
-                    return new Player(this,rs.getInt("id_player"),
-                            rs.getString("username"),
-                            hashedPassword, // Puoi anche decidere di non restituire l'hash
-                            rs.getInt("health"),
-                            rs.getInt("max_health"),
-                            rs.getInt("attack"),
-                            rs.getInt("armor"),
-                            rs.getInt("level"),
-                            rs.getInt("experience"));
-                } else {
-                    System.out.println("Password errata per l'utente: " + username);
-                }
-            } else {
-                System.out.println("Utente non trovato, controlla username");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            System.out.println("Errore nel caricare il giocatore");
-            e.printStackTrace();
-            return null;
-        }
-        return null;
-    }*/
+    // ----- Metodi di utilità -----
 
     /**
-     * Cerca un username nel DB
-     * @param username username da cercare nel DB
-     * @return true se esiste, false se non esiste
+     * Verifica se un username esiste nel database.
+     * @param username username da cercare.
+     * @return true se l'username esiste, false altrimenti.
      */
     public boolean isUsernameExist(@NotNull String username) {
         String query = "SELECT * FROM players WHERE username = ? LIMIT 1";
 
-        try(Connection con = connettiDb();
-        PreparedStatement pstmt = con.prepareStatement(query)){
-            pstmt.setString(1, username);
+        try (Connection con = connettiDb();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
 
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
+
             if (rs.next()) {
                 rs.close();
-                return true;
+                return true; // Username trovato
             }
+
             rs.close();
-        }catch(SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
-        return false;
+
+        return false; // Username non trovato
     }
 
     /**
-     * setter statico in modo da essere resettato da NewPlayerCreation e consentire la creazione di più utenti
-     * consecutivamente senza crash
-     * @param isAuthenticated variabile da impastare al membro interno alla classe
+     * Resetta lo stato di autenticazione per consentire la creazione di nuovi utenti.
+     * @param isAuthenticated lo stato di autenticazione da impostare.
      */
     public static void setIsAuthenticated(boolean isAuthenticated) {
         DatabaseManager.isAuthenticated = isAuthenticated;
     }
 
-    public static boolean getIsAuthenticated(){
+    /**
+     * Restituisce lo stato corrente di autenticazione.
+     * @return true se l'utente è autenticato, false altrimenti.
+     */
+    public static boolean getIsAuthenticated() {
         return DatabaseManager.isAuthenticated;
     }
-
-
 }
