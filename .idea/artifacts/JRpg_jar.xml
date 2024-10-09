@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="JRpg:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/JRpg_jar</output-path>
+    <root id="archive" name="JRpg.jar">
+      <element id="module-output" name="JRpg" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/OneDrive/Desktop/SQL/mysql-connector-j-9.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/OneDrive/Desktop/SQL/jbcrypt-0.4.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
