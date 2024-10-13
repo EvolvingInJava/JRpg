@@ -3,6 +3,7 @@ package org.EvolvingInJava.character.player;
 import org.EvolvingInJava.DB.DatabaseManager;
 import org.EvolvingInJava.character.Character;
 import org.EvolvingInJava.character.Displayable;
+import org.EvolvingInJava.character.item.Inventory;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -23,6 +24,7 @@ public class Player extends Character implements Displayable {
     private String password;
     private int exp;
     private int id_player;
+    private Inventory inventory;
 
     // DatabaseManager per gestire il salvataggio e il caricamento dei dati dal database
     private final DatabaseManager databaseManager;
@@ -44,15 +46,27 @@ public class Player extends Character implements Displayable {
      * @param exp             esperienza attuale del giocatore
      */
     public Player(DatabaseManager databaseManager, String username, String password, int health, int max_health,
-                  int attack, int armor, int level, int exp) {
+                  int attack, int armor, int level, int exp, Inventory inventory) {
 
         super(max_health, health, attack, armor, level); // Inizializza con valori di default
         setUsername(username);
         setPassword(password);
         setExp(exp);
         this.databaseManager = databaseManager;
+
+        // Salva il giocatore prima di caricare l'ID
         databaseManager.savePlayer(this);
-        setId_player(databaseManager.loadPlayer(getUsername(), getPassword()).getId_player());
+
+        // Carica l'ID del giocatore dal database (ora esiste)
+        Player savedPlayer = databaseManager.loadPlayer(getUsername(), getPassword());
+        if (savedPlayer != null) {
+            setId_player(savedPlayer.getId_player());
+        } else {
+            throw new IllegalStateException("Errore nel caricamento dell'ID del giocatore.");
+        }
+
+        // Assicurati che l'inventario sia inizializzato correttamente
+        setInventory(inventory != null ? inventory : new Inventory());
     }
 
     /**
@@ -70,13 +84,14 @@ public class Player extends Character implements Displayable {
      * @param exp             esperienza attuale del giocatore
      */
     public Player(DatabaseManager databaseManager, int id_player, String username, String password, int health, int max_health,
-                  int attack, int armor, int level, int exp) {
+                  int attack, int armor, int level, int exp, Inventory inventory) {
 
         super(max_health, health, attack, armor, level); // Inizializza con valori di default
         setId_player(id_player);
         setUsername(username);
         setPassword(password);
         setExp(exp);
+        setInventory(inventory != null ? inventory : new Inventory()); // Inizializza l'inventario se è null
         this.databaseManager = databaseManager;
     }
 
@@ -183,6 +198,18 @@ public class Player extends Character implements Displayable {
      */
     public int getEXP_NEEDED_LVLUP() {
         return EXP_NEEDED_LVLUP;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public void setInventory(Inventory inventory) {
+        if (inventory != null) {
+            this.inventory = inventory;
+        }else{
+            inventory = new Inventory();
+        }
     }
 
     /**

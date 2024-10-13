@@ -12,6 +12,8 @@
 package org.EvolvingInJava.DB;
 
 import org.EvolvingInJava.character.Enemy;
+import org.EvolvingInJava.character.item.Inventory;
+import org.EvolvingInJava.character.item.Item;
 import org.EvolvingInJava.character.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
@@ -74,6 +76,10 @@ public class DatabaseManager {
      * Salva un giocatore nel database. Se l'ID o l'username esistono già, aggiorna i dati del giocatore.
      * @param p il giocatore da salvare.
      */
+    /**
+     * Salva un giocatore nel database. Se l'ID o l'username esistono già, aggiorna i dati del giocatore.
+     * @param p il giocatore da salvare.
+     */
     public void savePlayer(@NotNull Player p) {
         String hashedPassword = passwordManager.hashPassword(p.getPassword()); // Hasha la password
         String query = "INSERT INTO players(username,password,health,max_health,attack,armor,level,experience) " +
@@ -109,6 +115,9 @@ public class DatabaseManager {
 
             pstmt.executeUpdate(); // Esegui l'update
 
+            // Salva o aggiorna l'inventario del giocatore
+            saveOrUpdateInventory(p, p.getInventory());
+
             isAuthenticated = true; // Autenticazione completata
             System.out.println("Player " + p.getUsername() + " è stato salvato");
         } catch (SQLException e) {
@@ -117,6 +126,13 @@ public class DatabaseManager {
         }
     }
 
+
+    /**
+     * Metodo per caricare un giocatore dal database verificando username e password.
+     * @param username username del giocatore.
+     * @param password password del giocatore.
+     * @return un oggetto Player se l'autenticazione ha successo, null altrimenti.
+     */
     /**
      * Metodo per caricare un giocatore dal database verificando username e password.
      * @param username username del giocatore.
@@ -145,8 +161,8 @@ public class DatabaseManager {
                     }
                 }
 
-                // Ritorna l'oggetto Player
-                return new Player(this,
+                // Crea il giocatore con i dettagli recuperati
+                Player player = new Player(this,
                         rs.getInt("id_player"),
                         rs.getString("username"),
                         hashedPassword,
@@ -155,7 +171,13 @@ public class DatabaseManager {
                         rs.getInt("attack"),
                         rs.getInt("armor"),
                         rs.getInt("level"),
-                        rs.getInt("experience"));
+                        rs.getInt("experience"),
+                        new Inventory()); // Passa un inventario vuoto inizialmente
+
+                // Carica l'inventario del giocatore
+                player.setInventory(loadInventory(player));
+
+                return player; // Ritorna l'oggetto Player con l'inventario caricato
             } else {
                 System.out.println("Utente non trovato: " + username);
             }
@@ -167,6 +189,8 @@ public class DatabaseManager {
         }
         return null;
     }
+
+
 
     // ----- Metodi per la gestione dei nemici -----
 
@@ -206,6 +230,89 @@ public class DatabaseManager {
 
         return null;
     }
+
+    public void saveOrUpdateInventory(@NotNull Player player, Inventory inventory) {
+        // Controllo se l'inventario è vuoto
+        if (inventory == null || inventory.getItems().isEmpty()) {
+            System.out.println("L'inventario è vuoto. Nessun dato da salvare.");
+            return;  // Esci dal metodo se l'inventario è vuoto
+        }
+
+        // Query SQL per inserire o aggiornare l'inventario del giocatore
+        String queryInsert = "INSERT INTO inventory (id_player, id_item, quantity) " +
+                "VALUES (?, ?, ?)";
+
+        String queryUpdate = "UPDATE inventory SET quantity = quantity + ? WHERE id_player = ? AND id_item = ?";
+
+        try (Connection con = connettiDb();
+             PreparedStatement pstmtInsert = con.prepareStatement(queryInsert);
+             PreparedStatement pstmtUpdate = con.prepareStatement(queryUpdate)) {
+
+            // Cicla attraverso tutti gli oggetti nell'inventario del giocatore
+            for (Item item : inventory.getItems()) {
+                // Prima aggiorna la quantità se l'oggetto esiste
+                pstmtUpdate.setInt(1, item.getQuantity());       // Quantità da aggiornare
+                pstmtUpdate.setInt(2, player.getId_player());    // ID del giocatore
+                pstmtUpdate.setInt(3, item.getItem_id());        // ID dell'oggetto
+
+                // Esegui l'update, se la riga esiste
+                int rowsAffected = pstmtUpdate.executeUpdate();
+                if (rowsAffected == 0) {
+                    // Se nessuna riga è stata aggiornata, l'oggetto non esiste, quindi inserisci
+                    pstmtInsert.setInt(1, player.getId_player());
+                    pstmtInsert.setInt(2, item.getItem_id());
+                    pstmtInsert.setInt(3, item.getQuantity());
+                    pstmtInsert.executeUpdate(); // Esegui l'inserimento
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+    public Inventory loadInventory(@NotNull Player p) {
+        // Query per unire inventario e items e ottenere tutti i dettagli necessari
+        String query = "SELECT inv.quantity, it.id_item, it.item_name, it.hp_modify, it.atk_modify, it.armor_modify, it.exp_modify " +
+                "FROM inventory inv " +
+                "INNER JOIN items it ON inv.id_item = it.id_item " +
+                "WHERE inv.id_player = ?";
+
+        Inventory inventory = new Inventory(); // Crea un oggetto Inventory vuoto
+
+        try (Connection con = connettiDb();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setInt(1, p.getId_player()); // Usa l'id del giocatore per recuperare il suo inventario
+            ResultSet rs = pstmt.executeQuery();
+
+            // Processa i risultati della query
+            while (rs.next()) {
+                // Crea un oggetto Item utilizzando i dati recuperati dal database
+                Item item = new Item(
+                        rs.getInt("id_item"),          // ID dell'oggetto
+                        rs.getString("item_name"),     // Nome dell'oggetto
+                        rs.getInt("quantity"),         // Quantità dell'oggetto
+                        rs.getInt("hp_modify"),        // Modificatore HP
+                        rs.getInt("atk_modify"),       // Modificatore Attacco
+                        rs.getInt("armor_modify"),     // Modificatore Armatura
+                        rs.getInt("exp_modify")        // Modificatore Esperienza
+                );
+                // Aggiungi l'oggetto all'inventario
+                inventory.addItem(item);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return inventory; // Restituisce l'inventario caricato
+    }
+
+
+
 
     // ----- Metodi di utilità -----
 
@@ -252,3 +359,5 @@ public class DatabaseManager {
         return DatabaseManager.isAuthenticated;
     }
 }
+
+

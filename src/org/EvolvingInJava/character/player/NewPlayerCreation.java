@@ -148,7 +148,7 @@ public class NewPlayerCreation {
         ALREADY_CREATED = true;
         return new Player(DB, getUsername(), getPassword(), getInitial_maxHealth(),
                 getInitial_maxHealth(), initial_attack,
-                initial_armor, LEVEL, EXPERIENCE);
+                initial_armor, LEVEL, EXPERIENCE,null);
     }
 
     /**
