@@ -234,7 +234,10 @@ public class DatabaseManager {
     public void saveOrUpdateInventory(@NotNull Player player, Inventory inventory) {
         // Controllo se l'inventario è vuoto
         if (inventory == null || inventory.getItems().isEmpty()) {
-            System.out.println("L'inventario è vuoto. Nessun dato da salvare.");
+            if(!player.isSkipInventoryCheck()) {
+                System.out.println("L'inventario è vuoto. Nessun dato da salvare.");
+
+            }
             return;  // Esci dal metodo se l'inventario è vuoto
         }
 

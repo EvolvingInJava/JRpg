@@ -10,11 +10,15 @@ public class TestInventario {
     public static void main(String[] args) {
         DatabaseManager db = new DatabaseManager();
 
-        Inventory inv;
-        Player player = db.loadPlayer("test","password");
-        inv = db.loadInventory(player);
         Item item = new Item(1,"pozione piccola",2,3,0,0,0);
-        player.getInventory().addItem(item);
+        Inventory inv = new Inventory();
+        //inv.addItem(item);
+       // Player player = db.loadPlayer("test5","password");
+
+        Player player = new Player(db,"test13","password",10,10,10,10,1,0,inv);
+        //inv = db.loadInventory(player);
+
+        //player.getInventory().addItem(item);
         player.save();
     }
 }

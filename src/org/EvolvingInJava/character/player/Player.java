@@ -25,6 +25,7 @@ public class Player extends Character implements Displayable {
     private int exp;
     private int id_player;
     private Inventory inventory;
+    private boolean skipInventoryCheck = true;
 
     // DatabaseManager per gestire il salvataggio e il caricamento dei dati dal database
     private final DatabaseManager databaseManager;
@@ -53,7 +54,6 @@ public class Player extends Character implements Displayable {
         setPassword(password);
         setExp(exp);
         this.databaseManager = databaseManager;
-
         // Salva il giocatore prima di caricare l'ID
         databaseManager.savePlayer(this);
 
@@ -65,6 +65,7 @@ public class Player extends Character implements Displayable {
             throw new IllegalStateException("Errore nel caricamento dell'ID del giocatore.");
         }
 
+        setSkipInventoryCheck(false);
         // Assicurati che l'inventario sia inizializzato correttamente
         setInventory(inventory != null ? inventory : new Inventory());
     }
@@ -86,7 +87,8 @@ public class Player extends Character implements Displayable {
     public Player(DatabaseManager databaseManager, int id_player, String username, String password, int health, int max_health,
                   int attack, int armor, int level, int exp, Inventory inventory) {
 
-        super(max_health, health, attack, armor, level); // Inizializza con valori di default
+        super(max_health, health, attack, armor, level);
+        setSkipInventoryCheck(false);// Inizializza con valori di default
         setId_player(id_player);
         setUsername(username);
         setPassword(password);
@@ -292,5 +294,13 @@ public class Player extends Character implements Displayable {
      */
     public void save() {
         databaseManager.savePlayer(this);
+    }
+
+    public boolean isSkipInventoryCheck() {
+        return skipInventoryCheck;
+    }
+
+    protected void setSkipInventoryCheck(boolean skipInventoryCheck) {
+        this.skipInventoryCheck = skipInventoryCheck;
     }
 }
