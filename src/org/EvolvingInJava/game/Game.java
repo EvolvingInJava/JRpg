@@ -14,7 +14,7 @@ import java.util.Scanner;
  * e l'interazione con il database.
  *
  * @Author EvolvingInJava
- * @Version 0.1.5b
+ * {@code @Version} 0.2.0.1b
  */
 public class Game implements Runnable {
     private Player player;  // Il giocatore attuale
@@ -87,7 +87,8 @@ public class Game implements Runnable {
      */
     private void avviaCombattimento(Player player, Enemy enemy) {
         Fight fight = new Fight(this.db, player, enemy); // Crea una nuova istanza di Fight
-        fight.startFight(); // Avvia il combattimento
+        player = fight.startFight(); // Avvia il combattimento
+        player.save();
     }
 
     /**

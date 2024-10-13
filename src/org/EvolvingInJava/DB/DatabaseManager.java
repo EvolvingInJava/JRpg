@@ -209,6 +209,7 @@ public class DatabaseManager {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
+                // Crea e ritorna l'oggetto Enemy, includendo l'ID dell'oggetto droppato
                 return new Enemy(
                         rs.getInt("id_enemy"),
                         rs.getString("enemy_name"),
@@ -217,7 +218,9 @@ public class DatabaseManager {
                         rs.getInt("attack"),
                         rs.getInt("armor"),
                         rs.getInt("level"),
-                        rs.getInt("exp_win"));
+                        rs.getInt("exp_win"),
+                        rs.getInt("drop_item_id")  // Carica anche l'ID dell'oggetto droppato
+                );
             } else {
                 System.out.println("Nemico non trovato: livello " + p.getLevel());
             }
@@ -230,6 +233,7 @@ public class DatabaseManager {
 
         return null;
     }
+
 
     public void saveOrUpdateInventory(@NotNull Player player, Inventory inventory) {
         // Controllo se l'inventario è vuoto
@@ -314,6 +318,38 @@ public class DatabaseManager {
         return inventory; // Restituisce l'inventario caricato
     }
 
+    public Item loadItemById(int itemId) {
+        String query = "SELECT * FROM items WHERE id_item = ?";
+
+        try (Connection con = connettiDb();
+             PreparedStatement pstmt = con.prepareStatement(query)) {
+
+            pstmt.setInt(1, itemId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // Crea e ritorna l'oggetto Item recuperato dal database
+                return new Item(
+                        rs.getInt("id_item"),
+                        rs.getString("item_name"),
+                        1,  // Quantità iniziale (1)
+                        rs.getInt("hp_modify"),
+                        rs.getInt("atk_modify"),
+                        rs.getInt("armor_modify"),
+                        rs.getInt("exp_modify")
+                );
+            } else {
+                System.out.println("Oggetto non trovato: ID " + itemId);
+            }
+
+            rs.close();
+        } catch (SQLException e) {
+            System.out.println("Errore nel caricamento dell'oggetto");
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
 
 

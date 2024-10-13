@@ -82,4 +82,29 @@ public class Inventory {
     public List<Item> getItems() {
         return items;
     }
+
+    /**
+     * Riduce la quantità dell'oggetto passato come parametro di uno. Se la quantità
+     * dell'oggetto scende a 0 o meno, l'oggetto viene rimosso dall'inventario.
+     *
+     * @param item Oggetto da usare (già presente nell'inventario)
+     */
+    public void useItem(Item item) {
+        for (int i = 0; i < getItems().size(); i++) {
+            Item currentItem = getItems().get(i);
+            if (currentItem.getItem_Name().equals(item.getItem_Name())) {
+                // Riduce la quantità dell'oggetto di 1
+                currentItem.setQuantity(currentItem.getQuantity() - 1);
+
+                // Se la quantità è 0 o meno, rimuove l'oggetto dall'inventario
+                if (currentItem.getQuantity() <= 0) {
+                    getItems().remove(i);
+                    System.out.println("Oggetto " + item.getItem_Name() + " rimosso dall'inventario.");
+                } else {
+                    System.out.println("Usato un " + item.getItem_Name() + ". Quantità rimanente: " + currentItem.getQuantity());
+                }
+                return;  // Esce dal metodo una volta trovato e gestito l'oggetto
+            }
+        }
+    }
 }
